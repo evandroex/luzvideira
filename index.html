@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>Palco Videira 3D</title>
+<style>
+:root{--bg:#fff;--fg:#111827;--mut:#5b6472;--line:#d9dde4;--card:#fff;--chip:#f3f4f6;--acc:#1d4ed8;--accfg:#fff;--sh:0 6px 24px rgba(0,0,0,.14);--cv:#fff}
+body[data-mode="luz"]{--bg:#0b0d12;--fg:#e8ebf2;--mut:#9aa3b5;--line:#252a36;--card:#12151c;--chip:#1a1e28;--acc:#f59e0b;--accfg:#111;--sh:0 6px 24px rgba(0,0,0,.5);--cv:#07080c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;overscroll-behavior:none}
+button{font:inherit;color:inherit;cursor:pointer}
+.app{position:fixed;inset:0;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+.top{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);background:var(--bg);flex:none;min-height:50px}
+.top h1{font-size:15px;margin:0;font-weight:700;line-height:1.15;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top h1 small{display:block;font-weight:400;color:var(--mut);font-size:11px}
+.seg{display:inline-flex;background:var(--chip);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:8px 12px;border-radius:8px;font-weight:600;font-size:13px;min-height:36px}
+.seg button[aria-pressed="true"]{background:var(--acc);color:var(--accfg)}
+.ib{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--chip);display:inline-flex;align-items:center;justify-content:center;flex:none}
+.ib svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.main{flex:1;min-height:0;display:flex;flex-direction:column}
+.stage{position:relative;flex:1;min-height:0;background:var(--cv);touch-action:none;overflow:hidden}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+.hint{position:absolute;left:10px;right:62px;top:10px;width:max-content;max-width:calc(100% - 72px);background:rgba(17,24,39,.82);color:#fff;font-size:12px;padding:6px 12px;border-radius:99px;pointer-events:none;transition:opacity .6s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hint.off{opacity:0}
+.fab{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:8px}
+.fab .ib{background:var(--card);box-shadow:var(--sh)}
+.fab .ib[aria-pressed="true"]{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
+.card{position:absolute;left:8px;right:8px;bottom:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh);padding:10px 12px;display:none;max-width:460px}
+.card.on{display:block}
+.card h2{font-size:17px;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card .sub{color:var(--mut);font-size:13px;margin:2px 0 6px}
+.card dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:0 0 8px;font-size:13px}
+.card dt{color:var(--mut)}.card dd{margin:0}
+.card .act{display:flex;gap:6px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--chip);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;min-height:40px}
+.btn.p{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
+.btn[aria-pressed="true"]{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
+.tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;border:1px solid currentColor}
+.tag.novo{background:#fde68a;color:#78350f;border-color:#b45309}
+.tag.ex{color:var(--mut)}
+.x{position:absolute;right:6px;top:6px;border:0;background:transparent;font-size:22px;line-height:1;width:36px;height:36px}
+.side{flex:none;display:flex;flex-direction:column;background:var(--bg);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.tabs{display:flex;gap:4px;padding:6px 8px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:1 0 auto;border:0;background:transparent;padding:9px 14px;border-radius:10px;font-weight:600;font-size:14px;min-height:42px;color:var(--mut)}
+.tabs button[aria-selected="true"]{background:var(--chip);color:var(--fg);box-shadow:inset 0 -3px 0 var(--acc)}
+.sheet{display:none;max-height:38vh;max-height:38dvh;overflow:auto;padding:4px 12px 14px;-webkit-overflow-scrolling:touch}
+.sheet.on{display:block}
+.sheet h3{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:12px 0 6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--chip);border-radius:99px;padding:7px 12px 7px 8px;font-size:13px;font-weight:600;min-height:40px}
+.chip[aria-pressed="false"]{opacity:.45}
+.chip i{width:14px;height:14px;border-radius:50%;display:inline-block;border:2px solid #fff;box-shadow:0 0 0 1px var(--line)}
+.chip b{font-weight:700}.chip span{color:var(--mut);font-weight:500}
+.row{display:flex;align-items:center;gap:10px;margin:6px 0;flex-wrap:wrap}
+.row label{font-size:13px;color:var(--mut)}
+input[type=range]{flex:1;min-width:120px;height:34px;accent-color:var(--acc)}
+.sw{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px;min-height:40px}
+.sw input{width:22px;height:22px;accent-color:var(--acc)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.look p{margin:4px 0 6px;color:var(--mut);font-size:13px}
+.cues{margin:0;padding-left:18px;font-size:13px}
+.note{font-size:12px;color:var(--mut);margin:8px 0 0}
+@media (min-width:900px){
+ .main{flex-direction:row}
+ .side{width:372px;border-top:0;border-left:1px solid var(--line);order:2}
+ .sheet{display:none;max-height:none;flex:1;min-height:0}
+ .sheet.on{display:block}
+ .card{left:12px;bottom:12px}
+ .stage{order:1}
+ .top h1{font-size:16px}
+}
+@media (max-height:520px) and (orientation:landscape){
+ .main{flex-direction:row}
+ .side{width:320px;border-top:0;border-left:1px solid var(--line);order:2}
+ .sheet{max-height:none;flex:1;min-height:0}
+ .card{left:8px;max-width:300px}
+ .top{min-height:42px;padding:3px 10px}
+}
+@media (prefers-reduced-motion:reduce){.hint{transition:none}}
+</style>
+</head>
+<body data-mode="proj">
+<div class="app">
+ <header class="top">
+  <h1>Palco Videira · 3D<small>Igreja Videira Ribeirão Preto · Rev 07</small></h1>
+  <div class="seg" id="segMode" role="group" aria-label="Modo">
+   <button data-m="proj" aria-pressed="true">Projeto</button>
+   <button data-m="luz" aria-pressed="false">Luz</button>
+  </div>
+  <button class="ib" id="bFs" aria-label="Tela cheia" title="Tela cheia"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+ </header>
+ <div class="main">
+  <div class="stage" id="stage">
+   <canvas id="cv" tabindex="0" aria-label="Palco em 3D. Arraste para girar, pince para aproximar, toque num aparelho para ver os dados."></canvas>
+   <div class="hint" id="hint">Arraste para girar · pince para zoom · toque num aparelho</div>
+   <div class="fab">
+    <button class="ib" id="bRot" aria-pressed="false" aria-label="Girar sozinho" title="Girar sozinho"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></button>
+    <button class="ib" id="bReset" aria-label="Voltar à vista inicial" title="Vista inicial"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></button>
+   </div>
+   <div class="card" id="card" role="dialog" aria-label="Dados do aparelho"></div>
+  </div>
+  <aside class="side">
+   <div class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-t="vistas" aria-selected="false">Vistas</button>
+    <button role="tab" data-t="aparelhos" aria-selected="false">Aparelhos</button>
+    <button role="tab" data-t="luz" aria-selected="false">Luz</button>
+    <button role="tab" data-t="lista" aria-selected="false">Lista</button>
+   </div>
+   <section class="sheet" id="s-vistas">
+    <h3>Vistas</h3>
+    <div class="grid" id="views"></div>
+    <h3>Camadas</h3>
+    <label class="sw"><input type="checkbox" id="l-str" checked> Estruturas (linha alta, treliça, barras)</label>
+    <label class="sw"><input type="checkbox" id="l-han"> Pendurais até o teto</label>
+    <label class="sw"><input type="checkbox" id="l-aud" checked> Cadeiras e mesa FOH</label>
+    <label class="sw"><input type="checkbox" id="l-scr" checked> Telão de LED</label>
+    <label class="sw"><input type="checkbox" id="l-ceil" checked> Teto assumido (5,20 m) e paredes</label>
+    <label class="sw"><input type="checkbox" id="l-id"> Mostrar IDs</label>
+    <label class="sw"><input type="checkbox" id="l-aim"> Mostrar apontamento (Projeto)</label>
+    <p class="note">Toque duas vezes num aparelho para focar nele. Dois dedos movem a câmera; pinça aproxima.</p>
+   </section>
+   <section class="sheet" id="s-aparelhos">
+    <h3>Situação</h3>
+    <div class="seg" id="segSt" role="group" aria-label="Situação"><button data-s="todos" aria-pressed="true">Todos</button><button data-s="novo" aria-pressed="false">Novos</button><button data-s="existente" aria-pressed="false">Existentes</button></div>
+    <h3>Tipos (toque para ligar e desligar)</h3>
+    <div class="chips" id="chips"></div>
+    <div class="row"><button class="btn" id="bAll">Todos</button><button class="btn" id="bNone">Nenhum</button></div>
+    <p class="note">Cor = tipo. Contorno tracejado = aparelho novo. Os 20 par LED antigos saem do rig; ligue “Par antigo” só para comparar.</p>
+   </section>
+   <section class="sheet" id="s-luz">
+    <div class="row"><b>Simulação de luz</b><span class="note" style="margin:0">Ligue o modo Luz no topo</span></div>
+    <h3>Cena</h3>
+    <div class="chips" id="lookBtns"></div>
+    <div class="look" id="lookInfo"></div>
+    <h3>Controle</h3>
+    <div class="row"><label for="master">Master</label><input type="range" id="master" min="0" max="100" value="100"></div>
+    <div class="row"><button class="btn p" id="bHit">Atomic: ataque</button></div>
+    <h3>Rig</h3>
+    <div class="seg" id="segRig" role="group" aria-label="Rig"><button data-r="novo" aria-pressed="true">Proposto</button><button data-r="atual" aria-pressed="false">Atual (antigo)</button></div>
+    <p class="note">“Atual” mostra só o que já existe, com os 20 par LED antigos, para comparar com o proposto.</p>
+   </section>
+   <section class="sheet" id="s-lista">
+    <h3>Quantidades (sem valores)</h3>
+    <table id="qt"><thead><tr><th>Cód.</th><th>Aparelho</th><th class="n">Qtd.</th><th>Situação</th></tr></thead><tbody></tbody><tfoot></tfoot></table>
+    <div class="row" style="margin-top:10px"><button class="btn p" id="bCopy">Copiar lista</button><span class="note" id="copyMsg" style="margin:0"></span></div>
+    <h3>Onde fica cada um</h3>
+    <table id="wh"><tbody></tbody></table>
+    <p class="note">Alturas e posições seguem o projeto Rev 07. Pé-direito de 5,20 m é assumido; confirmar em obra.</p>
+   </section>
+  </aside>
+ </div>
+</div>
+<script>
+(function(){
+"use strict";
+var DATA={"types":{"BM":{"name":"Beam spot","st":"existente"},"MB":{"name":"Mini beam spot LED 100 W","st":"novo"},"PL":{"name":"Par LED","st":"novo"},"RB":{"name":"Ribalta LED (fixa)","st":"existente"},"CB":{"name":"COB de frente","st":"existente"},"AT":{"name":"Strobe Atomic","st":"novo"},"BL":{"name":"BRUT (Blinder) 4 luzes, branco quente e frio","st":"novo"},"HZ":{"name":"Máquina de haze DMX","st":"novo"},"TR":{"name":"Tripé lateral em T","st":"novo","patch":false},"PT":{"name":"Par LED de teto (plateia)","st":"novo"},"MA":{"name":"Mac Aura (wash com aura)","st":"novo"}},"fixtures":[{"id":"BM-01","t":"BM","loc":"Linha alta do fundo","st":"existente","x":2.0,"y":1.3,"z":4.55,"a":[0,-1,0]},{"id":"BM-02","t":"BM","loc":"Linha alta do fundo","st":"existente","x":3.64,"y":1.3,"z":4.55,"a":[0,-1,0]},{"id":"BM-03","t":"BM","loc":"Linha alta do fundo","st":"existente","x":5.29,"y":1.3,"z":4.55,"a":[0,-1,0]},{"id":"BM-04","t":"BM","loc":"Linha alta do fundo","st":"existente","x":6.93,"y":1.3,"z":4.55,"a":[0,-1,0]},{"id":"BM-05","t":"BM","loc":"Linha alta do fundo","st":"existente","x":8.57,"y":1.3,"z":4.55,"a":[0,-1,0]},{"id":"BM-06","t":"BM","loc":"Linha alta do fundo","st":"existente","x":10.21,"y":1.3,"z":4.55,"a":[0,-1,0]},{"id":"BM-07","t":"BM","loc":"Linha alta do fundo","st":"existente","x":11.86,"y":1.3,"z":4.55,"a":[0,-1,0]},{"id":"BM-08","t":"BM","loc":"Linha alta do fundo","st":"existente","x":13.5,"y":1.3,"z":4.55,"a":[0,-1,0]},{"id":"BM-09","t":"BM","loc":"Treliça da frente","st":"existente","x":4.5,"y":3.0,"z":3.85,"a":[0,-1,0]},{"id":"BM-10","t":"BM","loc":"Treliça da frente","st":"existente","x":6.3,"y":3.0,"z":3.85,"a":[0,-1,0]},{"id":"BM-11","t":"BM","loc":"Treliça da frente","st":"existente","x":9.25,"y":3.0,"z":3.85,"a":[0,-1,0]},{"id":"BM-12","t":"BM","loc":"Treliça da frente","st":"existente","x":11.05,"y":3.0,"z":3.85,"a":[0,-1,0]},{"id":"MB-01","t":"MB","loc":"Chão do palco","st":"novo","x":3.9,"y":2.5,"z":0.2,"a":[0,1,0]},{"id":"MB-02","t":"MB","loc":"Chão do palco","st":"novo","x":5.7,"y":2.5,"z":0.2,"a":[0,1,0]},{"id":"MB-03","t":"MB","loc":"Chão do palco","st":"novo","x":9.85,"y":2.5,"z":0.2,"a":[0,1,0]},{"id":"MB-04","t":"MB","loc":"Chão do palco","st":"novo","x":11.65,"y":2.5,"z":0.2,"a":[0,1,0]},{"id":"AT-01","t":"AT","loc":"Treliça da frente","st":"novo","x":5.4,"y":3.0,"z":3.85,"a":[0,-0.5,0.866]},{"id":"AT-02","t":"AT","loc":"Treliça da frente","st":"novo","x":7.0,"y":3.0,"z":3.85,"a":[0,-0.5,0.866]},{"id":"AT-03","t":"AT","loc":"Treliça da frente","st":"novo","x":8.55,"y":3.0,"z":3.85,"a":[0,-0.5,0.866]},{"id":"AT-04","t":"AT","loc":"Treliça da frente","st":"novo","x":10.15,"y":3.0,"z":3.85,"a":[0,-0.5,0.866]},{"id":"PL-01","t":"PL","loc":"Chao, base do telao","st":"novo","x":5.08,"y":0.7,"z":0.15,"a":[0,1,0]},{"id":"PL-02","t":"PL","loc":"Chao, base do telao","st":"novo","x":6.88,"y":0.7,"z":0.15,"a":[0,1,0]},{"id":"PL-03","t":"PL","loc":"Chao, base do telao","st":"novo","x":8.68,"y":0.7,"z":0.15,"a":[0,1,0]},{"id":"PL-04","t":"PL","loc":"Chao, base do telao","st":"novo","x":10.47,"y":0.7,"z":0.15,"a":[0,1,0]},{"id":"PL-05","t":"PL","loc":"Parede lateral, aereo","st":"novo","x":0.2,"y":1.0,"z":3.8,"a":[0.94,-0.342,0]},{"id":"PL-06","t":"PL","loc":"Parede lateral, aereo","st":"novo","x":0.2,"y":3.2,"z":3.8,"a":[0.94,-0.342,0]},{"id":"PL-07","t":"PL","loc":"Parede lateral, aereo","st":"novo","x":15.35,"y":1.0,"z":3.8,"a":[-0.94,-0.342,0]},{"id":"PL-08","t":"PL","loc":"Parede lateral, aereo","st":"novo","x":15.35,"y":3.2,"z":3.8,"a":[-0.94,-0.342,0]},{"id":"PT-01","t":"PT","loc":"Teto da nave, linha 1","st":"novo","x":1.58,"y":7.2,"z":4.95,"a":[0,-1,0]},{"id":"PT-02","t":"PT","loc":"Teto da nave, linha 1","st":"novo","x":4.68,"y":7.2,"z":4.95,"a":[0,-1,0]},{"id":"PT-03","t":"PT","loc":"Teto da nave, linha 1","st":"novo","x":7.78,"y":7.2,"z":4.95,"a":[0,-1,0]},{"id":"PT-04","t":"PT","loc":"Teto da nave, linha 1","st":"novo","x":10.88,"y":7.2,"z":4.95,"a":[0,-1,0]},{"id":"PT-05","t":"PT","loc":"Teto da nave, linha 1","st":"novo","x":13.98,"y":7.2,"z":4.95,"a":[0,-1,0]},{"id":"PT-06","t":"PT","loc":"Teto da nave, linha 2","st":"novo","x":1.58,"y":8.7,"z":4.95,"a":[0,-1,0]},{"id":"PT-07","t":"PT","loc":"Teto da nave, linha 2","st":"novo","x":4.68,"y":8.7,"z":4.95,"a":[0,-1,0]},{"id":"PT-08","t":"PT","loc":"Teto da nave, linha 2","st":"novo","x":7.78,"y":8.7,"z":4.95,"a":[0,-1,0]},{"id":"PT-09","t":"PT","loc":"Teto da nave, linha 2","st":"novo","x":10.88,"y":8.7,"z":4.95,"a":[0,-1,0]},{"id":"PT-10","t":"PT","loc":"Teto da nave, linha 2","st":"novo","x":13.98,"y":8.7,"z":4.95,"a":[0,-1,0]},{"id":"PT-11","t":"PT","loc":"Teto da nave, linha 3","st":"novo","x":1.58,"y":10.2,"z":4.95,"a":[0,-1,0]},{"id":"PT-12","t":"PT","loc":"Teto da nave, linha 3","st":"novo","x":4.68,"y":10.2,"z":4.95,"a":[0,-1,0]},{"id":"PT-13","t":"PT","loc":"Teto da nave, linha 3","st":"novo","x":7.78,"y":10.2,"z":4.95,"a":[0,-1,0]},{"id":"PT-14","t":"PT","loc":"Teto da nave, linha 3","st":"novo","x":10.88,"y":10.2,"z":4.95,"a":[0,-1,0]},{"id":"PT-15","t":"PT","loc":"Teto da nave, linha 3","st":"novo","x":13.98,"y":10.2,"z":4.95,"a":[0,-1,0]},{"id":"RB-01","t":"RB","loc":"Parede lateral esq., aereo","st":"existente","x":0.2,"y":2.1,"z":3.8,"rot":90,"a":[0.906,-0.423,0]},{"id":"RB-02","t":"RB","loc":"Parede lateral dir., aereo","st":"existente","x":15.35,"y":2.1,"z":3.8,"rot":90,"a":[-0.906,-0.423,0]},{"id":"RB-03","t":"RB","loc":"Piso, fundo, entre os par","st":"existente","x":2.375,"y":0.7,"z":-0.15,"a":[0,1,0]},{"id":"RB-04","t":"RB","loc":"Piso, fundo, entre os par","st":"existente","x":4.175,"y":0.7,"z":0.06,"a":[0,1,0]},{"id":"RB-05","t":"RB","loc":"Piso, fundo, entre os par","st":"existente","x":11.375,"y":0.7,"z":0.06,"a":[0,1,0]},{"id":"RB-06","t":"RB","loc":"Piso, fundo, entre os par","st":"existente","x":13.175,"y":0.7,"z":-0.15,"a":[0,1,0]},{"id":"CB-01","t":"CB","loc":"Barra da frente","st":"existente","x":3.9,"y":4.35,"z":5.0,"bi":0,"a":[0,-0.819,-0.574]},{"id":"CB-02","t":"CB","loc":"Barra da frente","st":"existente","x":4.5,"y":4.35,"z":5.0,"bi":1,"a":[0,-0.819,-0.574]},{"id":"CB-03","t":"CB","loc":"Barra da frente","st":"existente","x":5.69,"y":4.35,"z":5.0,"bi":3,"a":[0,-0.819,-0.574]},{"id":"CB-04","t":"CB","loc":"Barra da frente","st":"existente","x":6.28,"y":4.35,"z":5.0,"bi":4,"a":[0,-0.819,-0.574]},{"id":"CB-05","t":"CB","loc":"Barra da frente","st":"existente","x":7.48,"y":4.35,"z":5.0,"bi":6,"a":[0,-0.819,-0.574]},{"id":"CB-06","t":"CB","loc":"Barra da frente","st":"existente","x":8.07,"y":4.35,"z":5.0,"bi":7,"a":[0,-0.819,-0.574]},{"id":"CB-07","t":"CB","loc":"Barra da frente","st":"existente","x":9.27,"y":4.35,"z":5.0,"bi":9,"a":[0,-0.819,-0.574]},{"id":"CB-08","t":"CB","loc":"Barra da frente","st":"existente","x":9.86,"y":4.35,"z":5.0,"bi":10,"a":[0,-0.819,-0.574]},{"id":"CB-09","t":"CB","loc":"Barra da frente","st":"existente","x":11.05,"y":4.35,"z":5.0,"bi":12,"a":[0,-0.819,-0.574]},{"id":"CB-10","t":"CB","loc":"Barra da frente","st":"existente","x":11.65,"y":4.35,"z":5.0,"bi":13,"a":[0,-0.819,-0.574]},{"id":"MA-01","t":"MA","loc":"Barra da frente, aereo","st":"novo","x":5.09,"y":4.35,"z":5.0,"bi":2,"a":[0,-1,0]},{"id":"MA-02","t":"MA","loc":"Barra da frente, aereo","st":"novo","x":6.88,"y":4.35,"z":5.0,"bi":5,"a":[0,-1,0]},{"id":"MA-03","t":"MA","loc":"Barra da frente, aereo","st":"novo","x":8.67,"y":4.35,"z":5.0,"bi":8,"a":[0,-1,0]},{"id":"MA-04","t":"MA","loc":"Barra da frente, aereo","st":"novo","x":10.46,"y":4.35,"z":5.0,"bi":11,"a":[0,-1,0]},{"id":"BRUT-01","t":"BL","loc":"Aereo lateral, frente do palco secundario esq., de frente para as cadeiras","st":"existente","x":1.81,"y":3.7,"z":3.8,"a":[0.321,-0.342,0.883]},{"id":"BRUT-02","t":"BL","loc":"Aereo lateral, frente do palco secundario dir., de frente para as cadeiras","st":"existente","x":13.74,"y":3.7,"z":3.8,"a":[-0.321,-0.342,0.883]},{"id":"BRUT-03","t":"BL","loc":"Linha alta, entre os beam spot","st":"novo","x":6.11,"y":1.3,"z":4.55,"a":[0,-0.342,0.94]},{"id":"BRUT-04","t":"BL","loc":"Linha alta, entre os beam spot","st":"novo","x":9.39,"y":1.3,"z":4.55,"a":[0,-0.342,0.94]},{"id":"AT-05","t":"AT","loc":"Fundo do palco, aereo","st":"novo","x":1.5,"y":0.4,"z":4.2,"a":[0.198,-0.309,0.93]},{"id":"AT-06","t":"AT","loc":"Fundo do palco, aereo","st":"novo","x":3.1,"y":0.4,"z":4.2,"a":[0.198,-0.309,0.93]},{"id":"AT-07","t":"AT","loc":"Fundo do palco, aereo","st":"novo","x":12.45,"y":0.4,"z":4.2,"a":[-0.198,-0.309,0.93]},{"id":"AT-08","t":"AT","loc":"Fundo do palco, aereo","st":"novo","x":14.05,"y":0.4,"z":4.2,"a":[-0.198,-0.309,0.93]}],"legacy":[{"id":"PL-01","t":"PL","loc":"Chão, base do telão","st":"existente","x":0.9,"y":0.7,"z":0.15,"lg":true,"a":[0,1,0]},{"id":"PL-02","t":"PL","loc":"Chão, base do telão","st":"existente","x":1.82,"y":0.7,"z":0.15,"lg":true,"a":[0,1,0]},{"id":"PL-03","t":"PL","loc":"Chão, base do telão","st":"existente","x":2.73,"y":0.7,"z":0.15,"lg":true,"a":[0,1,0]},{"id":"PL-04","t":"PL","loc":"Chão, base do telão","st":"existente","x":3.65,"y":0.7,"z":0.15,"lg":true,"a":[0,1,0]},{"id":"PL-05","t":"PL","loc":"Chão, base do telão","st":"existente","x":4.57,"y":0.7,"z":0.15,"lg":true,"a":[0,1,0]},{"id":"PL-06","t":"PL","loc":"Chão, base do telão","st":"existente","x":5.48,"y":0.7,"z":0.15,"lg":true,"a":[0,1,0]},{"id":"PL-07","t":"PL","loc":"Chão, base do telão","st":"existente","x":6.4,"y":0.7,"z":0.15,"lg":true,"a":[0,1,0]},{"id":"PL-08","t":"PL","loc":"Chão, base do telão","st":"existente","x":7.32,"y":0.7,"z":0.15,"lg":true,"a":[0,1,0]},{"id":"PL-09","t":"PL","loc":"Chão, base do telão","st":"existente","x":8.23,"y":0.7,"z":0.15,"lg":true,"a":[0,1,0]},{"id":"PL-10","t":"PL","loc":"Chão, base do telão","st":"existente","x":9.15,"y":0.7,"z":0.15,"lg":true,"a":[0,1,0]},{"id":"PL-11","t":"PL","loc":"Chão, base do telão","st":"existente","x":10.07,"y":0.7,"z":0.15,"lg":true,"a":[0,1,0]},{"id":"PL-12","t":"PL","loc":"Chão, base do telão","st":"existente","x":10.98,"y":0.7,"z":0.15,"lg":true,"a":[0,1,0]},{"id":"PL-13","t":"PL","loc":"Chão, base do telão","st":"existente","x":11.9,"y":0.7,"z":0.15,"lg":true,"a":[0,1,0]},{"id":"PL-14","t":"PL","loc":"Chão, base do telão","st":"existente","x":12.82,"y":0.7,"z":0.15,"lg":true,"a":[0,1,0]},{"id":"PL-15","t":"PL","loc":"Chão, base do telão","st":"existente","x":13.73,"y":0.7,"z":0.15,"lg":true,"a":[0,1,0]},{"id":"PL-16","t":"PL","loc":"Chão, base do telão","st":"existente","x":14.65,"y":0.7,"z":0.15,"lg":true,"a":[0,1,0]},{"id":"PL-17","t":"PL","loc":"Tripé lateral","st":"existente","x":1.5,"y":2.2,"z":2.3,"lg":true,"a":[1,0,0]},{"id":"PL-18","t":"PL","loc":"Tripé lateral","st":"existente","x":1.5,"y":3.5,"z":2.3,"lg":true,"a":[1,0,0]},{"id":"PL-19","t":"PL","loc":"Tripé lateral","st":"existente","x":14.05,"y":2.2,"z":2.3,"lg":true,"a":[-1,0,0]},{"id":"PL-20","t":"PL","loc":"Tripé lateral","st":"existente","x":14.05,"y":3.5,"z":2.3,"lg":true,"a":[-1,0,0]}],"extras":[{"code":"GM","name":"Console Black Horse (grandMA)","qty":1,"st":"novo","fn":"Controle de toda a luz, na mesa do FOH","where":"Mesa FOH"}]};
+var F=DATA.fixtures,LG=DATA.legacy||[],T=DATA.types,EX=DATA.extras||[];
+var CX=7.775,FY=4.85,CEIL=5.2,NAVE=-0.97;
+var $=function(s){return document.querySelector(s)};
+var V={
+ BM:{c:'#1d4ed8',cn:'Azul'},MB:{c:'#0891b2',cn:'Ciano'},PL:{c:'#16a34a',cn:'Verde'},PT:{c:'#db2777',cn:'Rosa'},
+ RB:{c:'#7c3aed',cn:'Violeta'},CB:{c:'#a16207',cn:'Âmbar'},MA:{c:'#65a30d',cn:'Verde-limão'},AT:{c:'#dc2626',cn:'Vermelho'},BL:{c:'#ea580c',cn:'Laranja'}
+};
+var NAMES={BM:'Beam spot',MB:'Mini beam spot LED 100 W',PL:'Par LED',PT:'Par LED de teto',RB:'Ribalta LED fixa',CB:'COB de frente',MA:'Mac Aura (wash com aura)',AT:'Strobe Atomic',BL:'BRUT (blinder 4 luzes)'};
+var ORD=['BM','MB','PL','PT','RB','CB','MA','AT','BL'];
+function cd(t){return t==='BL'?'BRUT':t}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function fm(v,n){return Number(v).toFixed(n==null?2:n).replace('.',',')}
+var REDUCE=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- vetores ---------- */
+function sub(a,b){return [a[0]-b[0],a[1]-b[1],a[2]-b[2]]}
+function add(a,b){return [a[0]+b[0],a[1]+b[1],a[2]+b[2]]}
+function mul(a,k){return [a[0]*k,a[1]*k,a[2]*k]}
+function dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]}
+function crs(a,b){return [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]}
+function nrm(a){var l=Math.sqrt(dot(a,a))||1;return [a[0]/l,a[1]/l,a[2]/l]}
+function lerp(a,b,t){return a+(b-a)*t}
+function rgba(h,a){var n=parseInt(h.slice(1),16);return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+Math.max(0,Math.min(1,a)).toFixed(3)+')'}
+
+/* ---------- aparelhos ---------- */
+var HS={BM:[.12,.12,.18],MB:[.09,.09,.13],PL:[.1,.1,.1],PT:[.1,.1,.1],RB:[.45,.06,.06],CB:[.12,.12,.12],MA:[.17,.17,.2],AT:[.22,.1,.12],BL:[.28,.14,.1]};
+var cnt={};
+function prep(f,lg){
+ f.W=[f.x-CX,f.z,f.y-FY];
+ if(!lg){cnt[f.t]=(cnt[f.t]||0);f.n=cnt[f.t]++}
+ var fw=nrm(f.a),ref=Math.abs(fw[1])<.95?[0,1,0]:[0,0,1],R=nrm(crs(fw,ref)),U=crs(R,fw);
+ if(f.rot===90){var tmp=R;R=U;U=mul(tmp,-1)}
+ f.fw=fw;f.R=R;f.U=U;f.lg=!!lg;
+}
+F.forEach(function(f){prep(f,false)});
+LG.forEach(function(f,i){prep(f,true);f.n=i;f.st='antigo'});
+var BYID={};F.forEach(function(f){BYID[f.id]=f});
+function aimtxt(f){
+ var a=f.a,pit=Math.asin(Math.max(-1,Math.min(1,a[1])))*180/Math.PI,h=Math.hypot(a[0],a[2]),t,b;
+ if(h<.05)return a[1]>0?'Vertical, para cima':'Vertical, para baixo';
+ var yaw=Math.atan2(a[0],a[2])*180/Math.PI,ay=Math.abs(yaw);
+ if(ay<5)b='Plateia';else if(ay>175)b='Fundo do palco';else if(ay>=85&&ay<=95)b=yaw>0?'Lado direito':'Lado esquerdo';
+ else{var off=ay<90?ay:180-ay;b=(ay<90?'Plateia':'Fundo do palco')+', '+Math.round(off)+'° p/ '+(yaw>0?'dir.':'esq.')}
+ t=Math.abs(pit)<3?'horizontal':Math.round(Math.abs(pit))+'° p/ '+(pit<0?'baixo':'cima');
+ return b+' · '+t+(f.rot?' · na vertical':'');
+}
+function fixtxt(f){
+ var t=f.t,z=f.z;
+ if(t==='BM')return f.loc.indexOf('Linha')===0?'Garra G na linha alta + cabo de segurança':'Garra G na treliça + cabo de segurança';
+ if(t==='BL')return z>1?(f.loc.indexOf('Linha')===0?'2 garras G na linha alta + cabo de segurança':'Aéreo lateral: pendural fixado no teto + cabo de segurança'):'Piso';
+ if(t==='AT')return f.loc.indexOf('Treli')===0?'Garra G na treliça + cabo de segurança':'Suporte de parede (fundo) + cabo de segurança';
+ if(t==='CB'||t==='MA')return 'Garra G na barra da frente + cabo de segurança';
+ if(t==='PT')return 'Garra G na linha de teto + cabo de segurança no teto';
+ if((t==='PL'||t==='RB')&&z>1)return 'Suporte de parede lateral';
+ if(t==='MB')return 'Piso: base própria, calçada e travada';
+ return 'Piso: apoio antiderrapante';
+}
+function whereOf(f){return f.loc.replace('aereo','aéreo').replace('Chao','Piso').replace('Chão do palco','Piso do palco').replace('telao','telão').replace('secundario','secundário')}
+
+/* ---------- estado ---------- */
+var ST={mode:'proj',stat:'todos',vis:{},legacy:false,sel:null,labels:false,aim:false,rig:'novo',look:'louvor',master:1,hit:-1,
+ layers:{str:true,han:false,aud:true,scr:true,ceil:true},auto:false,cam:null,tr:null};
+ORD.forEach(function(t){ST.vis[t]=true});
+var dirty=true;
+
+/* ---------- câmera ---------- */
+function fpLook(pos,tgt,fov){var fw=nrm(sub(tgt,pos)),v=mul(fw,-1);return {fp:true,pos:pos,az:Math.atan2(v[0],v[2]),el:Math.asin(v[1]),fov:fov}}
+var PRE={
+ persp:{n:'Perspectiva',s:{fp:false,t:[0,1.2,1.2],az:-0.55,el:0.36,dist:27,fov:40}},
+ frente:{n:'Frente',s:{fp:false,t:[0,1.8,0],az:0,el:0.05,dist:26,fov:40}},
+ lateral:{n:'Lateral',s:{fp:false,t:[0,1.8,1.5],az:1.5708,el:0.05,dist:27,fov:40}},
+ topo:{n:'Topo (planta)',s:{fp:false,t:[0,0,2.2],az:0,el:1.5,dist:30,fov:40}},
+ plateia:{n:'Plateia (fundo da nave)',s:{fp:true,pos:[0.2,0.68,9.0],az:0,el:-0.297,fov:70}},
+ cantor:{n:'Do palco',s:{fp:true,pos:[0,1.7,-1.6],az:Math.PI,el:0.04,fov:72}},
+ quinaE:{n:'Quina esquerda',s:fpLook([-9.7,3.0,8.6],[1.0,1.7,-1.2],64)},
+ quinaD:{n:'Quina direita',s:fpLook([9.7,3.0,8.6],[-1.0,1.7,-1.2],64)}
+};
+function clone(s){return JSON.parse(JSON.stringify(s))}
+ST.cam=clone(PRE.persp.s);
+function pf(s){ /* posição e frente de um estado */
+ var v=[Math.sin(s.az)*Math.cos(s.el),Math.sin(s.el),Math.cos(s.az)*Math.cos(s.el)],fw=mul(v,-1);
+ return {pos:s.fp?s.pos.slice():add(s.t,mul(v,s.dist)),fw:fw,fov:s.fov};
+}
+function mkCam(p,fw,fov){var f=nrm(fw),r=nrm(crs(f,[0,1,0])),u=crs(r,f);return {p:p,f:f,r:r,u:u,fov:fov}}
+function curCam(now){
+ if(ST.tr){
+  var tr=ST.tr,k=Math.min(1,(now-tr.t0)/tr.dur),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+  var p=[lerp(tr.a.pos[0],tr.b.pos[0],e),lerp(tr.a.pos[1],tr.b.pos[1],e),lerp(tr.a.pos[2],tr.b.pos[2],e)];
+  var fw=nrm([lerp(tr.a.fw[0],tr.b.fw[0],e),lerp(tr.a.fw[1],tr.b.fw[1],e),lerp(tr.a.fw[2],tr.b.fw[2],e)]);
+  if(k>=1){ST.cam=tr.fin;ST.tr=null}
+  dirty=true;
+  return mkCam(p,fw,lerp(tr.a.fov,tr.b.fov,e));
+ }
+ var q=pf(ST.cam);return mkCam(q.pos,q.fw,q.fov);
+}
+function adj(s){
+ s=clone(s);var asp=CW/Math.max(1,CH);
+ if(asp<1){if(s.fp)s.fov=Math.min(100,s.fov*(1+(1-asp)*.55));else{s.dist=s.dist*Math.min(1.4,1+(1-asp)*.55);if(asp<.8&&s.el>.3&&s.el<.4){s.el=.62;s.dist*=.9;s.t[2]=2.6}}}
+ return s;
+}
+function goto(s){
+ s=adj(s);
+ if(REDUCE){ST.cam=s;ST.tr=null;dirty=true;return}
+ var a=pf(ST.tr?ST.cam:ST.cam),b=pf(s);
+ ST.tr={a:a,b:b,t0:performance.now(),dur:650,fin:s};dirty=true;
+}
+var FIT={};
+function proj(c,P,W,H){
+ var d=sub(P,c.p),z=dot(d,c.f);if(z<.12)return null;
+ var F=(Math.min(W,H)/2)/Math.tan(c.fov*Math.PI/360);
+ return [W/2+dot(d,c.r)/z*F,H/2-dot(d,c.u)/z*F,z,F/z];
+}
+
+/* ---------- geometria fixa ---------- */
+var SEG=[];
+function sbox(x0,x1,y0,y1,z0,z1,k,col){
+ var v=[[x0,y0,z0],[x1,y0,z0],[x1,y1,z0],[x0,y1,z0],[x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1]];
+ [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(function(e){SEG.push([v[e[0]],v[e[1]],k,col])});
+}
+var STR=[ /* estruturas: x0,x1,y,z,cor, pontos de içamento */
+ {id:'E1',n:'Linha alta',x0:1.5,x1:14,y:1.3,z:4.55,c:'#1d4ed8',p:[-6,-3,0,3,6]},
+ {id:'E2',n:'Treliça da frente',x0:3.6,x1:11.95,y:3.0,z:4.0,c:'#0f766e',p:[-3.9,-1.4,1.4,3.9]},
+ {id:'E3',n:'Barra da frente',x0:3.75,x1:11.8,y:4.35,z:5.0,c:'#a16207',p:[-3.7,-1.4,1.4,3.7]},
+ {id:'E4',n:'Teto 1',x0:1.0,x1:14.6,y:7.2,z:4.95,c:'#db2777',p:[-6.2,-3.1,0,3.1,6.2]},
+ {id:'E5',n:'Teto 2',x0:1.0,x1:14.6,y:8.7,z:4.95,c:'#db2777',p:[-6.2,-3.1,0,3.1,6.2]},
+ {id:'E6',n:'Teto 3',x0:1.0,x1:14.6,y:10.2,z:4.95,c:'#db2777',p:[-6.2,-3.1,0,3.1,6.2]}
+];
+var QUAD=[];
+(function(){
+ var yN=NAVE,yT=CEIL,nx0=-3-CX,nx1=21-CX,nz0=4.27-FY,nz1=14-FY;
+ /* palcos */
+ sbox(-4.16,4.16,yN,0,-4.85,0,'s');sbox(-7.775,-4.16,yN,-.21,-4.85,-.9,'s');sbox(4.16,7.775,yN,-.21,-4.85,-.9,'s');
+ /* nave e paredes do palco */
+ [[nx0,nz0],[nx1,nz0],[nx1,nz1],[nx0,nz1]].forEach(function(a,i,arr){var b=arr[(i+1)%4];SEG.push([[a[0],yN,a[1]],[b[0],yN,b[1]],'r']);SEG.push([[a[0],yT,a[1]],[b[0],yT,b[1]],'k']);SEG.push([[a[0],yN,a[1]],[a[0],yT,a[1]],'k'])});
+ SEG.push([[-7.775,yN,-4.85],[-7.775,yT,-4.85],'k'],[[7.775,yN,-4.85],[7.775,yT,-4.85],'k'],[[-7.775,yT,-4.85],[7.775,yT,-4.85],'k'],[[-7.775,yN,-4.85],[7.775,yN,-4.85],'r']);
+ SEG.push([[-7.775,yT,-4.85],[-7.775,yT,nz0],'k'],[[7.775,yT,-4.85],[7.775,yT,nz0],'k']);
+ /* grade do teto (só no modo Luz) */
+ var i;for(i=-10;i<=12;i+=2)SEG.push([[i,yT,nz0-.6],[i,yT,nz1],'c']);
+ for(i=-4;i<=9;i+=2.5)SEG.push([[nx0,yT,i],[nx1,yT,i],'c']);
+ /* grade do piso (só Projeto) */
+ for(i=-10;i<=11;i++)SEG.push([[i,yN,nz0],[i,yN,nz1],'g']);
+ for(i=-5;i<=9;i++)SEG.push([[nx0,yN,i],[nx1,yN,i],'g']);
+ /* cadeiras, mesa */
+ [[-1.28,2.76],[3.95,11.15],[12.34,19.5]].forEach(function(b){sbox(b[0]-CX,b[1]-CX,yN,yN+.45,6.7-FY,10.6-FY,'a')});
+ sbox(7.275-CX,8.275-CX,yN,.1,11.7-FY,12.3-FY,'a');
+ /* telão */
+ sbox(-3,3,.3,3.3,-4.75,-4.65,'w');
+ /* estruturas */
+ STR.forEach(function(e){
+  var th=e.id==='E1'?.1:e.id==='E2'?.3:.1;
+  sbox(e.x0-CX,e.x1-CX,e.z-th/2,e.z+th/2,e.y-FY-(e.id==='E2'?.15:.05),e.y-FY+(e.id==='E2'?.15:.05),'t',e.c);
+  e.p.forEach(function(px){SEG.push([[px,e.z,e.y-FY],[px,yT,e.y-FY],'h',e.c]);});
+ });
+ /* suportes de parede */
+ F.forEach(function(f){
+  if(f.z>1&&(f.loc.indexOf('Parede lateral')===0)){var X=f.x-CX,Z=f.y-FY,wx=f.x<CX?-7.775:7.775;SEG.push([[wx,f.z,Z],[X,f.z,Z],'t','#374151'])}
+  if(f.t==='AT'&&f.loc.indexOf('Fundo')===0){SEG.push([[f.x-CX,f.z,-4.85],[f.x-CX,f.z,f.y-FY],'t','#374151'])}
+  if(f.t==='BL'&&f.z>1&&f.loc.indexOf('Linha')!==0){SEG.push([[f.x-CX,f.z,f.y-FY],[f.x-CX,yT,f.y-FY],'h','#ea580c'])}
+ });
+ QUAD=[[[-4.16,0,-4.85],[4.16,0,-4.85],[4.16,0,0],[-4.16,0,0]],[[-7.775,-.21,-4.85],[-4.16,-.21,-4.85],[-4.16,-.21,-.9],[-7.775,-.21,-.9]],[[4.16,-.21,-4.85],[7.775,-.21,-4.85],[7.775,-.21,-.9],[4.16,-.21,-.9]]];
+})();
+var SC=[[-3,.3,-4.7],[3,.3,-4.7],[3,3.3,-4.7],[-3,3.3,-4.7]];
+
+/* ---------- canvas ---------- */
+var cv=$('#cv'),cx=cv.getContext('2d'),stage=$('#stage'),CW=800,CH=600,DPR=1,RS=1;
+function resize(){
+ var r=stage.getBoundingClientRect();if(r.width<2||r.height<2)return;
+ DPR=Math.min(window.devicePixelRatio||1,2)*RS;
+ cv.width=Math.round(r.width*DPR);cv.height=Math.round(r.height*DPR);CW=r.width;CH=r.height;dirty=true;
+}
+if(window.ResizeObserver)new ResizeObserver(resize).observe(stage);window.addEventListener('resize',resize);
+
+function path(c,pts){c.beginPath();c.moveTo(pts[0][0],pts[0][1]);for(var i=1;i<pts.length;i++)c.lineTo(pts[i][0],pts[i][1]);c.closePath()}
+function poly(c,cam,P,fill){var q=[],i,p;for(i=0;i<P.length;i++){p=proj(cam,P[i],CW,CH);if(!p)return;q.push(p)}c.fillStyle=fill;path(c,q);c.fill()}
+function clip(cam,A,B){
+ var near=.15,d0=dot(sub(A,cam.p),cam.f),d1=dot(sub(B,cam.p),cam.f);
+ if(d0<near&&d1<near)return null;
+ if(d0<near){var t=(near-d0)/(d1-d0);A=[A[0]+(B[0]-A[0])*t,A[1]+(B[1]-A[1])*t,A[2]+(B[2]-A[2])*t]}
+ else if(d1<near){var t2=(near-d1)/(d0-d1);B=[B[0]+(A[0]-B[0])*t2,B[1]+(A[1]-B[1])*t2,B[2]+(A[2]-B[2])*t2]}
+ return [A,B];
+}
+function seg3(c,cam,A,B){var s=clip(cam,A,B);if(!s)return;var a=proj(cam,s[0],CW,CH),b=proj(cam,s[1],CW,CH);if(!a||!b)return;c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1])}
+function glow(c,x,y,r,col,a){if(a<=.004||r<1)return;var g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,rgba(col,a));g.addColorStop(1,rgba(col,0));c.fillStyle=g;c.beginPath();c.arc(x,y,r,0,6.2832);c.fill()}
+function hull(p){
+ p=p.slice().sort(function(a,b){return a[0]-b[0]||a[1]-b[1]});
+ function cr(o,a,b){return (a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0])}
+ var lo=[],up=[],i;
+ for(i=0;i<p.length;i++){while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],p[i])<=0)lo.pop();lo.push(p[i])}
+ for(i=p.length-1;i>=0;i--){while(up.length>=2&&cr(up[up.length-2],up[up.length-1],p[i])<=0)up.pop();up.push(p[i])}
+ lo.pop();up.pop();return lo.concat(up);
+}
+function cone(c,cam,A,Tg,ang,col,al,fe,spot){
+ if(al<.004)return;
+ var ax=Tg[0]-A[0],ay=Tg[1]-A[1],az=Tg[2]-A[2],len=Math.sqrt(ax*ax+ay*ay+az*az);if(len<.05)return;
+ var a=[ax/len,ay/len,az/len],e1=nrm(crs(a,Math.abs(a[1])<.95?[0,1,0]:[1,0,0])),e2=crs(a,e1),r=len*Math.tan(ang*Math.PI/360);
+ var pa=proj(cam,A,CW,CH);if(!pa)return;
+ var pts=[[pa[0],pa[1]]],ring=[],i,th,E,pp;
+ for(i=0;i<12;i++){th=i*.5236;E=[Tg[0]+r*(Math.cos(th)*e1[0]+Math.sin(th)*e2[0]),Tg[1]+r*(Math.cos(th)*e1[1]+Math.sin(th)*e2[1]),Tg[2]+r*(Math.cos(th)*e1[2]+Math.sin(th)*e2[2])];pp=proj(cam,E,CW,CH);if(!pp)return;ring.push([pp[0],pp[1]]);pts.push([pp[0],pp[1]])}
+ var h=hull(pts),pt=proj(cam,Tg,CW,CH)||[ring[0][0],ring[0][1]];
+ var g=c.createLinearGradient(pa[0],pa[1],pt[0],pt[1]);g.addColorStop(0,rgba(col,al));g.addColorStop(1,rgba(col,al*fe));
+ c.fillStyle=g;path(c,h);c.fill();
+ if(spot){c.fillStyle=rgba(col,al*spot);path(c,ring);c.fill()}
+}
+
+/* ---------- looks (simulação) ---------- */
+var LOOKS={
+ louvor:{n:'Louvor',d:'Calor de fundo. Par âmbar no chão, beams em coluna e teto âmbar baixo, sem atomic.',par:'#ff8a2b',pl:.8,bc:['#ffb35c'],bl:.25,bm:'down',bli:0,at:'off',cob:.12,pt:['#ff9a3c'],ptl:.5,ptm:'static',cues:['Q1 Par fundo âmbar 80%','Q2 Beams e minis em coluna 25%','Q3 Teto âmbar 50%']},
+ adoracao:{n:'Adoração',d:'Azul profundo com feixes abrindo devagar e o teto respirando.',par:'#3a5bff',pl:.7,bc:['#8fb4ff'],bl:.32,bm:'fanslow',bli:0,at:'off',cob:.1,pt:['#3a5bff'],ptl:.55,ptm:'breath',cues:['Q1 Par azul 70%','Q2 Beams em leque lento','Q3 Teto azul respirando']},
+ palavra:{n:'Palavra',d:'Luz limpa e quente para quem fala. COB de frente, BRUT baixos e teto discreto.',par:'#ffe3b8',pl:.45,bc:['#ffffff'],bl:0,bm:'down',bli:.5,at:'off',cob:.7,pt:['#ffe3b8'],ptl:.35,ptm:'static',cues:['Q1 Par branco quente 45%','Q2 COB 70%, BRUT 50%','Q3 Teto branco quente 35%']},
+ ataque:{n:'Ataque',d:'Feixes cruzados magenta e ciano, atomics em chase e o teto correndo do palco para o fundo.',par:'#e83dd9',pl:1,bc:['#52d1ea','#ff4fd0'],bl:.65,bm:'cross',bli:.4,at:'chase',cob:.1,pt:['#ff4fd0','#52d1ea'],ptl:.8,ptm:'wave',cues:['Q1 Beams e minis cross','Q2 Atomic chase pelos 8 (até 2 por segundo)','Q3 Teto em onda magenta e ciano']},
+ final:{n:'Final',d:'Tudo aberto: âmbar, feixes em leque dourado, atomics em pulso lento e teto em onda.',par:'#ffb02e',pl:.75,bc:['#ffcf70','#ffa94d'],bl:.32,bm:'fan',bli:.4,at:'pulse',cob:.1,pt:['#ffb02e','#ffe3b8'],ptl:.8,ptm:'wave',cues:['Q1 Par âmbar 100%, BRUT 70%','Q2 Leque branco e dourado','Q3 Atomic 0,8 Hz, teto em onda']}
+};
+var MAL={louvor:.45,adoracao:.6,palavra:.45,ataque:1,final:.85};
+var BLC={louvor:'#ffd89a',adoracao:'#cfe0ff',palavra:'#ffd89a',ataque:'#d6e8ff',final:'#ffe2b0'};
+var SEQ=[0,4,1,5,2,6,3,7],aL=[0,0,0,0,0,0,0,0],aAny=0;
+function aimTgt(f,mode,t,up){
+ var X=f.W[0],Z=f.W[2],ph=f.n*.8,tx,tz;
+ if(mode==='down'){tx=X+Math.sin(t*.5+ph)*.15;tz=Z+Math.cos(t*.4+ph)*.1}
+ else if(mode==='fan'){tx=X*1.7+Math.sin(t*.9+ph)*.9;tz=Z+(up?1.5:4.5)+Math.sin(t*.6+ph)*1.2}
+ else if(mode==='fanslow'){tx=X*1.3+Math.sin(t*.4+ph)*.7;tz=Z+(up?1:3.5)+Math.sin(t*.3+ph)}
+ else{tx=-X*.9+Math.sin(t*1.2+ph)*1.1;tz=Z+(up?1.5:4)+Math.sin(t*.8+ph)*1.2}
+ return up?[tx,4.4,tz]:[tx,mode==='down'?0:-.3,tz];
+}
+function ptLevel(f,t,L){var r=Math.floor(f.n/5),c=f.n%5,b=L.ptl;
+ if(L.ptm==='breath')return b*(.62+.38*Math.sin(t*1.1+r*.6));
+ if(L.ptm==='wave')return b*(.2+.8*Math.max(0,Math.sin(t*2.4-r*1.3+c*.4)));
+ return b}
+
+/* ---------- visibilidade ---------- */
+function visible(f){
+ if(f.lg)return ST.mode==='luz'?ST.rig==='atual':ST.legacy;
+ if(ST.mode==='luz'&&ST.rig==='atual'&&f.st==='novo')return false;
+ if(!ST.vis[f.t])return false;
+ if(ST.stat==='novo'&&f.st!=='novo')return false;
+ if(ST.stat==='existente'&&f.st==='novo')return false;
+ return true;
+}
+
+/* ---------- desenho ---------- */
+var LKP={r:'#9ca3af',k:'#b8bec9',a:'#cfd3da',s:'#374151',g:'#eef0f3',w:'#b91c1c',c:null,h:'#9aa3b2',t:'#1f2937'};
+var LKL={r:'rgba(120,135,165,.3)',k:'rgba(120,135,165,.3)',a:'rgba(120,135,165,.28)',s:'rgba(170,185,215,.5)',g:null,w:'rgba(170,185,215,.5)',c:'rgba(120,135,165,.14)',h:'rgba(150,165,195,.35)',t:'rgba(190,205,235,.6)'};
+var PICK=[];
+function drawScene(now){
+ var c=cx,cam=curCam(now),luz=ST.mode==='luz',t=(REDUCE||!luz)?0:now/1000,i,j,f;
+ c.setTransform(DPR,0,0,DPR,0,0);c.globalCompositeOperation='source-over';
+ c.fillStyle=luz?'#07080c':'#ffffff';c.fillRect(0,0,CW,CH);
+ /* pisos */
+ QUAD.forEach(function(q){poly(c,cam,q,luz?'rgba(26,31,44,.95)':'rgba(233,235,240,.9)')});
+ if(ST.layers.scr)poly(c,cam,SC,luz?rgba(LOOKS[ST.look].par,.07+.13*LOOKS[ST.look].pl*ST.master):'rgba(254,202,202,.8)');
+ /* linhas */
+ var L=ST.layers,keys=['g','c','r','k','a','s','w','h','t'],ki,sg;
+ c.lineCap='round';
+ for(ki=0;ki<keys.length;ki++){
+  var k=keys[ki];
+  if(k==='g'&&luz)continue;if(k==='c'&&!luz)continue;
+  if((k==='k'||k==='c')&&!L.ceil)continue;
+  if(k==='a'&&!L.aud)continue;if(k==='w'&&!L.scr)continue;
+  if(k==='t'&&!L.str)continue;if(k==='h'&&!L.han)continue;
+  if(k==='t'||k==='h'){
+   /* por cor */
+   var cols={};SEG.forEach(function(s){if(s[2]===k){var cc=s[3]||'#333';(cols[cc]=cols[cc]||[]).push(s)}});
+   Object.keys(cols).forEach(function(cc){c.beginPath();c.strokeStyle=luz?rgba(cc==='#374151'?'#aab8d0':cc,.75):(k==='h'?rgba(cc,.55):cc);c.lineWidth=k==='t'?(luz?1.6:2.2):1;if(k==='h')c.setLineDash([3,3]);cols[cc].forEach(function(s){seg3(c,cam,s[0],s[1])});c.stroke();c.setLineDash([])});
+   continue;
+  }
+  var sty=luz?LKL[k]:LKP[k];if(!sty)continue;
+  c.beginPath();c.strokeStyle=sty;c.lineWidth=k==='s'?1.3:k==='g'?.7:1;
+  if(k==='k'&&!luz)c.setLineDash([5,4]);
+  for(i=0;i<SEG.length;i++){sg=SEG[i];if(sg[2]===k)seg3(c,cam,sg[0],sg[1])}
+  c.stroke();c.setLineDash([]);
+ }
+ /* aparelhos */
+ PICK=[];
+ var Lk=LOOKS[ST.look],m=ST.master,lit=[];
+ if(luz){c.globalCompositeOperation='lighter'}
+ var all=F.concat(LG);
+ for(i=0;i<all.length;i++){
+  f=all[i];if(!visible(f))continue;
+  var A=f.W,p=proj(cam,A,CW,CH);if(!p)continue;
+  PICK.push([f,p]);
+  if(!luz)continue;
+  var Tg,col,al,lv=0;
+  switch(f.t){
+   case 'BM':col=Lk.bc[f.n%Lk.bc.length];Tg=aimTgt(f,Lk.bm,t,false);cone(c,cam,A,Tg,6,col,Lk.bl*m*.3,.5,.9);lv=Lk.bl*m;break;
+   case 'MB':col=Lk.bc[(f.n+2)%Lk.bc.length];Tg=aimTgt(f,Lk.bm,t,true);cone(c,cam,A,Tg,6,col,Lk.bl*m*.28,.1,0);lv=Lk.bl*m;break;
+   case 'PL':col=Lk.par;if(A[1]>1)cone(c,cam,A,add(A,mul(f.a,7)),36,col,Lk.pl*m*.2,.2,0);else cone(c,cam,A,[A[0],A[1]+3.4,A[2]],38,col,Lk.pl*m*.22,.05,0);lv=Lk.pl*m;break;
+   case 'RB':col=Lk.par;var rl=A[1]<1?3:6;cone(c,cam,A,add(A,mul(f.a,rl)),60,col,Lk.pl*m*.13,.25,.5);lv=Lk.pl*m*.5;break;
+   case 'CB':col='#ffe3b8';cone(c,cam,A,add(A,mul(f.a,6)),34,col,Lk.cob*m*.2,.3,.6);lv=Lk.cob*m;break;
+   case 'MA':var ml=MAL[ST.look],mph=f.n*1.1,mx,mz;col=(Lk.bm==='cross'||Lk.bm==='fan')?Lk.bc[f.n%Lk.bc.length]:Lk.par;
+    if(Lk.bm==='down'){mx=A[0]+Math.sin(t*.4+mph)*.2;mz=A[2]-1.8}else if(Lk.bm==='cross'){mx=-A[0]*.8+Math.sin(t*1.1+mph)*1.5;mz=A[2]-2+Math.sin(t*.7+mph)}else{mx=A[0]*1.4+Math.sin(t*.8+mph)*1.2;mz=A[2]-2.2+Math.sin(t*.5+mph)}
+    cone(c,cam,A,[mx,0,mz],24,col,ml*m*.28,.5,.9);lv=ml*m;break;
+   case 'BL':col=BLC[ST.look];lv=Math.max(Lk.bli*m,aAny*.9);cone(c,cam,A,add(A,mul(f.a,9)),55,col,lv*.26,.15,0);break;
+   case 'AT':col='#ffffff';lv=aL[f.n]||0;if(lv>.02)cone(c,cam,A,f.n<4?[A[0]+(f.n-1.5)*2,-.5,A[2]+9]:add(A,mul(f.a,10)),72,col,.36*lv,.1,0);break;
+   case 'PT':lv=ptLevel(f,t,Lk)*m;col=Lk.pt[(f.n%5)%Lk.pt.length];cone(c,cam,A,[A[0],-.7,A[2]],46,col,lv*.12,.25,.7);break;
+   default:continue;
+  }
+  lit.push([f,p,col,lv]);
+ }
+ if(luz){
+  lit.forEach(function(e){var f=e[0],p=e[1],k=f.t==='AT'?1.6:f.t==='BL'?1.2:1;glow(c,p[0],p[1],Math.max(5,p[3]*(f.t==='AT'?1.2:f.t==='BL'?.9:.4))*k*(.4+e[3]),e[2],Math.min(.85,e[3]*(f.t==='AT'||f.t==='BL'?.8:.55)))});
+  c.globalCompositeOperation='source-over';
+  var fl=0;aL.forEach(function(a){fl=Math.max(fl,a)});
+  if(fl>.02&&ST.rig==='novo'){c.fillStyle=rgba('#ffffff',(cam.fov>55?.18:.08)*fl);c.fillRect(0,0,CW,CH)}
+ }
+ c.globalCompositeOperation='source-over';
+ /* corpos dos aparelhos */
+ var placed=[];
+ PICK.forEach(function(e){
+  var f=e[0],p=e[1],col=f.lg?'#8a8f99':V[f.t].c,h=HS[f.t],sel=ST.sel===f;
+  var cs=[],a,b,cc,pr;
+  for(a=0;a<8;a++){
+   var sx=(a&1)?1:-1,sy=(a&2)?1:-1,sz=(a&4)?1:-1;
+   var P3=add(add(add(f.W,mul(f.R,sx*h[0])),mul(f.U,sy*h[1])),mul(f.fw,sz*h[2]));
+   pr=proj(cam,P3,CW,CH);cs.push(pr);
+  }
+  var small=p[3]*.22<7;
+  if(!small&&cs.every(function(q){return q})){
+   c.beginPath();c.strokeStyle=luz?rgba(col,.9):col;c.lineWidth=sel?2.6:1.4;
+   [[0,1],[2,3],[4,5],[6,7],[0,2],[1,3],[4,6],[5,7],[0,4],[1,5],[2,6],[3,7]].forEach(function(e2){c.moveTo(cs[e2[0]][0],cs[e2[0]][1]);c.lineTo(cs[e2[1]][0],cs[e2[1]][1])});
+   c.stroke();
+   c.fillStyle=rgba(col,luz?.5:.28);path(c,[[cs[4][0],cs[4][1]],[cs[5][0],cs[5][1]],[cs[7][0],cs[7][1]],[cs[6][0],cs[6][1]]]);c.fill();
+  }else{
+   var r0=Math.max(2.6,p[3]*.12);
+   c.fillStyle=luz?rgba(col,.95):col;c.beginPath();c.arc(p[0],p[1],r0,0,6.2832);c.fill();
+  }
+  if(f.st==='novo'&&!luz){c.save();c.setLineDash([2,2]);c.strokeStyle='#111827';c.lineWidth=.9;c.beginPath();c.arc(p[0],p[1],Math.max(8,Math.min(24,p[3]*.3)),0,6.2832);c.stroke();c.restore()}
+  if(ST.aim&&!luz||sel){
+   var L2=(f.t==='MB'||f.t==='BM')?1.3:.9,q2=proj(cam,add(f.W,mul(f.fw,sel?3.2:L2)),CW,CH);
+   if(q2){c.save();c.setLineDash([4,3]);c.strokeStyle=luz?'#fff':col;c.lineWidth=sel?1.6:1;c.beginPath();c.moveTo(p[0],p[1]);c.lineTo(q2[0],q2[1]);c.stroke();c.restore();c.fillStyle=luz?'#fff':col;c.beginPath();c.arc(q2[0],q2[1],sel?3:2,0,6.2832);c.fill()}
+  }
+  if(sel){
+   var fl2=ST.mode==='luz'?NAVE:(f.t==='PT'?NAVE:(f.W[0]<-4.2||f.W[0]>4.2?-.21:0)),g=proj(cam,[f.W[0],fl2,f.W[2]],CW,CH);
+   if(g){c.save();c.setLineDash([3,3]);c.strokeStyle=luz?'#e8ebf2':'#111827';c.lineWidth=1;c.beginPath();c.moveTo(p[0],p[1]);c.lineTo(g[0],g[1]);c.stroke();c.restore();
+    c.font='600 11px system-ui,sans-serif';c.textAlign='left';c.fillStyle=luz?'#e8ebf2':'#111827';c.fillText('Z '+fm(f.z)+' m',g[0]+6,(p[1]+g[1])/2)}
+   c.beginPath();c.strokeStyle=luz?'#f59e0b':'#111827';c.lineWidth=2;c.arc(p[0],p[1],Math.max(14,Math.min(30,p[3]*.34)),0,6.2832);c.stroke();
+  }
+ });
+ /* rótulos */
+ c.font='600 10px system-ui,sans-serif';c.textAlign='center';
+ PICK.forEach(function(e){
+  var f=e[0],p=e[1],sel=ST.sel===f;
+  if(!(ST.labels||sel))return;
+  var w=c.measureText(f.id).width+4,x=p[0]-w/2,y=p[1]+10,ok=true,q;
+  if(!sel)for(q=0;q<placed.length;q++){var o=placed[q];if(x<o[0]+o[2]&&x+w>o[0]&&y<o[1]+o[3]&&y+11>o[1]){ok=false;break}}
+  if(!ok)return;placed.push([x,y,w,11]);
+  c.fillStyle=luz?'rgba(7,8,12,.7)':'rgba(255,255,255,.8)';c.fillRect(x,y,w,11);
+  c.fillStyle=f.lg?'#8a8f99':(luz?'#e8ebf2':V[f.t].c);c.fillText(f.id,p[0],y+9);
+ });
+ /* gizmo */
+ var gx=34,gy=CH-34,ax=[[1,0,0,'#dc2626','X'],[0,1,0,'#16a34a','Z'],[0,0,1,'#2563eb','Y']];
+ c.lineWidth=2;c.font='700 10px system-ui,sans-serif';
+ ax.forEach(function(a){var vv=[a[0],a[1],a[2]],px=dot(vv,cam.r)*20,py=-dot(vv,cam.u)*20;c.strokeStyle=a[3];c.beginPath();c.moveTo(gx,gy);c.lineTo(gx+px,gy+py);c.stroke();c.fillStyle=a[3];c.fillText(a[4],gx+px*1.3,gy+py*1.3+3)});
+ /* cartão de escala (modo orbit) */
+ if(!ST.cam.fp&&!ST.tr){var sc=proj(cam,add(ST.cam.t,[0,0,0]),CW,CH);if(sc){var px1=sc[3],mpx=px1*5;if(mpx>30){c.strokeStyle=luz?'#9aa3b5':'#5b6472';c.lineWidth=1.5;c.beginPath();c.moveTo(CW-12-mpx,CH-14);c.lineTo(CW-12,CH-14);c.moveTo(CW-12-mpx,CH-18);c.lineTo(CW-12-mpx,CH-10);c.moveTo(CW-12,CH-18);c.lineTo(CW-12,CH-10);c.stroke();c.fillStyle=luz?'#9aa3b5':'#5b6472';c.textAlign='right';c.font='600 10px system-ui,sans-serif';c.fillText('5 m',CW-12,CH-22)}}}
+}
+
+/* ---------- loop ---------- */
+var last=0,acc=0,nfr=0,tFrame=0;
+function updateAtomics(now){
+ var t=REDUCE?0:now/1000,e=(now-ST.hit)/1000,hitOn=ST.hit>=0&&e<1.3,L=LOOKS[ST.look],m=ST.master,i;
+ aAny=0;
+ for(i=0;i<8;i++){var a=0;
+  if(hitOn)a=REDUCE?.8:Math.max(a,(e%.65)<.16?1:0);
+  if(L.at==='chase'){if(REDUCE)a=Math.max(a,.4);else{var idx=Math.floor(t/.5)%8;if(i===SEQ[idx]&&(t%.5)<.14)a=1}}
+  if(L.at==='pulse')a=Math.max(a,REDUCE?.5:.35+.35*Math.sin(t*5.0265));
+  aL[i]=a*m;aAny=Math.max(aAny,aL[i])}
+}
+function frame(now){
+ requestAnimationFrame(frame);
+ if(ST.auto&&!ST.cam.fp&&!ST.tr&&!REDUCE){ST.cam.az-=0.0035;dirty=true}
+ var anim=ST.mode==='luz'&&!REDUCE;
+ if(!dirty&&!anim)return;
+ var t0=performance.now();
+ updateAtomics(now);
+ drawScene(now);dirty=false;
+ if(anim){var dt=performance.now()-t0;acc+=dt;nfr++;if(nfr>=45){var avg=acc/nfr;if(avg>22&&RS>.6){RS=Math.max(.6,RS-.15);resize()}acc=0;nfr=0}}
+}
+
+/* ---------- interação ---------- */
+var ptrs={},g0=null,moved=false,tDown=0,lastTap=0,lastTapPos=null;
+function ev(e){var r=cv.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top]}
+function stopTr(){if(ST.tr){var c=curCam(performance.now());ST.tr=null;/* congela o estado atual */
+  /* converte câmera atual em estado orbit/fp equivalente */
+  var s=ST.cam;if(!s.fp){/* recalcula a partir da câmera */ }
+ }}
+function hideHint(){$('#hint').classList.add('off')}
+cv.addEventListener('pointerdown',function(e){
+ hideHint();if(ST.tr){ST.cam=ST.tr.fin;ST.tr=null}
+ cv.setPointerCapture(e.pointerId);ptrs[e.pointerId]=ev(e);
+ var ids=Object.keys(ptrs);
+ moved=false;tDown=performance.now();
+ g0={n:ids.length,az:ST.cam.az,el:ST.cam.el,dist:ST.cam.dist,fov:ST.cam.fov,t:ST.cam.t&&ST.cam.t.slice(),pos:ST.cam.pos&&ST.cam.pos.slice(),start:ids.map(function(k){return ptrs[k].slice()}),shift:e.shiftKey||e.button===2,btn:e.button};
+ if(ids.length===2){var a=ptrs[ids[0]],b=ptrs[ids[1]];g0.d=Math.hypot(a[0]-b[0],a[1]-b[1]);g0.mid=[(a[0]+b[0])/2,(a[1]+b[1])/2]}
+});
+cv.addEventListener('pointermove',function(e){
+ if(!ptrs[e.pointerId])return;ptrs[e.pointerId]=ev(e);
+ var ids=Object.keys(ptrs),s=ST.cam,k;
+ if(ids.length===1&&g0&&g0.n===1){
+  var p=ptrs[ids[0]],dx=p[0]-g0.start[0][0],dy=p[1]-g0.start[0][1];
+  if(Math.hypot(dx,dy)>5)moved=true;if(!moved)return;
+  if(g0.shift&&!s.fp){panBy(dx,dy);g0.start=[p.slice()];g0.t=s.t.slice();return}
+  var kk=.0062;
+  s.az=g0.az-dx*kk;
+  if(s.fp)s.el=Math.max(-1.35,Math.min(1.35,g0.el-dy*kk));else s.el=Math.max(-.12,Math.min(1.52,g0.el+dy*kk));
+  dirty=true;
+ }else if(ids.length>=2&&g0&&g0.d){
+  var a=ptrs[ids[0]],b=ptrs[ids[1]],d=Math.hypot(a[0]-b[0],a[1]-b[1]),mid=[(a[0]+b[0])/2,(a[1]+b[1])/2];
+  moved=true;
+  if(s.fp){var q=pf(s),sc=d/g0.d,mv=(sc-1)*-14;var fw=q.fw;s.pos=add(g0.pos,mul(fw,-mv));
+   var r=nrm(crs(fw,[0,1,0])),u=[0,1,0],mx=(mid[0]-g0.mid[0])*.018,my=(mid[1]-g0.mid[1])*.018;s.pos=add(s.pos,add(mul(r,-mx),mul(u,my)));
+   s.pos[1]=Math.max(.3,Math.min(8,s.pos[1]))}
+  else{s.dist=Math.max(3,Math.min(60,g0.dist/(d/g0.d)));
+   var q2=pf(s),cam=mkCam(q2.pos,q2.fw,s.fov),pxm=s.dist*Math.tan(s.fov*Math.PI/360)*2/Math.min(CW,CH);
+   var ox=-(mid[0]-g0.mid[0])*pxm,oy=(mid[1]-g0.mid[1])*pxm;
+   s.t=add(g0.t,add(mul(cam.r,ox),mul(cam.u,oy)));s.t[1]=Math.max(-1,Math.min(8,s.t[1]))}
+  dirty=true;
+ }
+});
+function panBy(dx,dy){var s=ST.cam,q=pf(s),cam=mkCam(q.pos,q.fw,s.fov),pxm=s.dist*Math.tan(s.fov*Math.PI/360)*2/Math.min(CW,CH);s.t=add(g0.t,add(mul(cam.r,-dx*pxm),mul(cam.u,dy*pxm)));dirty=true}
+function endPtr(e){
+ var was=ptrs[e.pointerId];delete ptrs[e.pointerId];
+ var rest=Object.keys(ptrs);
+ if(rest.length===0){
+  if(was&&!moved&&performance.now()-tDown<450){tap(was)}
+  g0=null;
+ }else{
+  /* reinicia gesto com o dedo que sobrou */
+  var p=ptrs[rest[0]];g0={n:1,az:ST.cam.az,el:ST.cam.el,dist:ST.cam.dist,fov:ST.cam.fov,t:ST.cam.t&&ST.cam.t.slice(),pos:ST.cam.pos&&ST.cam.pos.slice(),start:[p.slice()]};moved=true;
+ }
+}
+cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',endPtr);
+cv.addEventListener('contextmenu',function(e){e.preventDefault()});
+cv.addEventListener('wheel',function(e){
+ e.preventDefault();hideHint();var s=ST.cam,k=Math.exp(e.deltaY*.0012);
+ if(s.fp){var q=pf(s);s.pos=add(s.pos,mul(q.fw,-e.deltaY*.012));s.pos[1]=Math.max(.3,Math.min(8,s.pos[1]))}else s.dist=Math.max(3,Math.min(60,s.dist*k));
+ dirty=true;
+},{passive:false});
+cv.addEventListener('keydown',function(e){
+ var s=ST.cam,k=.08,h=true;
+ if(e.key==='ArrowLeft')s.az+=k;else if(e.key==='ArrowRight')s.az-=k;
+ else if(e.key==='ArrowUp')s.el=Math.max(-1.35,Math.min(1.52,s.el+(s.fp?-k:k)));else if(e.key==='ArrowDown')s.el=Math.max(-1.35,Math.min(1.52,s.el-(s.fp?-k:k)));
+ else if(e.key==='+'||e.key==='=')s.dist=Math.max(3,s.dist*.9);else if(e.key==='-')s.dist=Math.min(60,s.dist*1.1);
+ else if(e.key==='Escape')select(null);else h=false;
+ if(h){e.preventDefault();dirty=true}
+});
+function pickAt(pt){
+ var best=null,bd=1e9,rad=Math.max(22,Math.min(CW,CH)*.04);
+ PICK.forEach(function(e){var d=Math.hypot(e[1][0]-pt[0],e[1][1]-pt[1]);if(d<rad&&(d<bd||(Math.abs(d-bd)<4&&e[1][2]<best[1][2]))){bd=d;best=e}});
+ return best&&best[0];
+}
+function tap(pt){
+ var f=pickAt(pt),now=performance.now(),dbl=lastTapPos&&now-lastTap<380&&Math.hypot(pt[0]-lastTapPos[0],pt[1]-lastTapPos[1])<24;
+ lastTap=now;lastTapPos=pt;
+ if(dbl){ if(f){select(f);focusOn(f)} else goto(PRE.persp.s); return }
+ select(f);
+}
+function focusOn(f){goto({fp:false,t:f.W.slice(),az:ST.cam.fp?-0.55:ST.cam.az,el:.35,dist:5,fov:40})}
+
+/* ---------- cartão do aparelho ---------- */
+var card=$('#card');
+function select(f){
+ ST.sel=f;dirty=true;
+ if(!f){card.classList.remove('on');return}
+ var st=f.lg?'antigo (sai do rig)':f.st;
+ card.innerHTML='<button class="x" aria-label="Fechar" data-a="close">×</button><h2><span style="color:'+(f.lg?'#6b7280':V[f.t].c)+'">'+esc(f.id)+'</span><span class="tag '+(f.st==='novo'?'novo':'ex')+'">'+esc(st)+'</span></h2>'
+ +'<div class="sub">'+esc(f.lg?'Par LED antigo':NAMES[f.t])+'</div>'
+ +'<dl><dt>Local</dt><dd>'+esc(whereOf(f))+'</dd><dt>Posição</dt><dd>X '+fm(f.x)+' · Y '+fm(f.y)+' · Z '+fm(f.z)+' m</dd><dt>Direção</dt><dd>'+esc(aimtxt(f))+'</dd><dt>Fixação</dt><dd>'+esc(f.lg?'—':fixtxt(f))+'</dd></dl>'
+ +'<div class="act"><button class="btn p" data-a="focus">Focar</button><button class="btn" data-a="see">Ver daqui</button></div>';
+ card.classList.add('on');
+}
+card.addEventListener('click',function(e){
+ var b=e.target.closest('button');if(!b||!ST.sel)return;var a=b.getAttribute('data-a'),f=ST.sel;
+ if(a==='close')select(null);
+ else if(a==='focus')focusOn(f);
+ else if(a==='see'){var tg=add(f.W,mul(f.fw,6)),s=fpLook(add(f.W,mul(f.fw,.25)),tg,62);goto(s)}
+});
+
+/* ---------- UI ---------- */
+function setMode(m){
+ ST.mode=m;document.body.setAttribute('data-mode',m);
+ [].forEach.call($('#segMode').children,function(b){b.setAttribute('aria-pressed',b.getAttribute('data-m')===m)});
+ var tc=document.querySelector('meta[name=theme-color]');if(tc)tc.setAttribute('content',m==='luz'?'#0b0d12':'#ffffff');
+ if(m==='luz')openTab('luz');
+ dirty=true;
+}
+$('#segMode').addEventListener('click',function(e){var b=e.target.closest('button');if(b)setMode(b.getAttribute('data-m'))});
+var tabs=$('#tabs'),cur=null;
+function openTab(n){
+ var wide=window.matchMedia('(min-width:900px),(max-height:520px) and (orientation:landscape)').matches;
+ if(!wide&&cur===n){n=null}
+ cur=n;
+ [].forEach.call(tabs.children,function(b){b.setAttribute('aria-selected',b.getAttribute('data-t')===n)});
+ document.querySelectorAll('.sheet').forEach(function(s){s.classList.toggle('on',s.id==='s-'+n)});
+ setTimeout(resize,30);
+}
+tabs.addEventListener('click',function(e){var b=e.target.closest('button');if(b)openTab(b.getAttribute('data-t'))});
+/* vistas */
+(function(){var h='';Object.keys(PRE).forEach(function(k){h+='<button class="btn" data-v="'+k+'">'+PRE[k].n+'</button>'});$('#views').innerHTML=h})();
+$('#views').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;ST.auto=false;$('#bRot').setAttribute('aria-pressed','false');goto(PRE[b.getAttribute('data-v')].s);hideHint()});
+$('#bReset').addEventListener('click',function(){ST.auto=false;$('#bRot').setAttribute('aria-pressed','false');goto(PRE.persp.s)});
+$('#bRot').addEventListener('click',function(){ST.auto=!ST.auto;this.setAttribute('aria-pressed',ST.auto);if(ST.auto&&ST.cam.fp)goto(PRE.persp.s)});
+[['l-str','str'],['l-han','han'],['l-aud','aud'],['l-scr','scr'],['l-ceil','ceil']].forEach(function(p){$('#'+p[0]).addEventListener('change',function(e){ST.layers[p[1]]=e.target.checked;dirty=true})});
+$('#l-id').addEventListener('change',function(e){ST.labels=e.target.checked;dirty=true});
+$('#l-aim').addEventListener('change',function(e){ST.aim=e.target.checked;dirty=true});
+/* tipos */
+var chips=$('#chips');
+function buildChips(){
+ var q={},h='';F.forEach(function(f){q[f.t]=(q[f.t]||0)+1});
+ ORD.forEach(function(t){h+='<button class="chip" data-t="'+t+'" aria-pressed="'+ST.vis[t]+'"><i style="background:'+V[t].c+'"></i><b>'+cd(t)+'</b><span>'+q[t]+'</span></button>'});
+ h+='<button class="chip" data-t="_lg" aria-pressed="'+ST.legacy+'"><i style="background:#8a8f99"></i><b>Par antigo</b><span>'+LG.length+'</span></button>';
+ chips.innerHTML=h;
+}
+chips.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var t=b.getAttribute('data-t');
+ if(t==='_lg')ST.legacy=!ST.legacy;else ST.vis[t]=!ST.vis[t];buildChips();dirty=true;if(ST.sel&&!visible(ST.sel))select(null)});
+$('#bAll').addEventListener('click',function(){ORD.forEach(function(t){ST.vis[t]=true});buildChips();dirty=true});
+$('#bNone').addEventListener('click',function(){ORD.forEach(function(t){ST.vis[t]=false});buildChips();dirty=true;select(null)});
+$('#segSt').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;ST.stat=b.getAttribute('data-s');[].forEach.call($('#segSt').children,function(x){x.setAttribute('aria-pressed',x===b)});dirty=true;if(ST.sel&&!visible(ST.sel))select(null)});
+/* luz */
+function lookUI(){
+ var L=LOOKS[ST.look];
+ $('#lookInfo').innerHTML='<p><b>'+L.n+'.</b> '+L.d+'</p><ul class="cues">'+L.cues.map(function(c){return '<li>'+c+'</li>'}).join('')+'</ul>';
+ [].forEach.call($('#lookBtns').children,function(b){b.setAttribute('aria-pressed',b.getAttribute('data-l')===ST.look)});
+}
+(function(){var h='';Object.keys(LOOKS).forEach(function(k){h+='<button class="btn" data-l="'+k+'" aria-pressed="false">'+LOOKS[k].n+'</button>'});$('#lookBtns').innerHTML=h})();
+$('#lookBtns').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;ST.look=b.getAttribute('data-l');lookUI();if(ST.mode!=='luz')setMode('luz');dirty=true});
+$('#master').addEventListener('input',function(e){ST.master=e.target.value/100;dirty=true});
+$('#bHit').addEventListener('click',function(){ST.hit=performance.now();if(ST.mode!=='luz')setMode('luz')});
+$('#segRig').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;ST.rig=b.getAttribute('data-r');[].forEach.call($('#segRig').children,function(x){x.setAttribute('aria-pressed',x===b)});dirty=true;if(ST.sel&&!visible(ST.sel))select(null)});
+/* lista */
+function lista(){
+ var g={},order=[],tb='',tot=0,nw=0,ex=0;
+ F.forEach(function(f){var k=f.t+'|'+(f.st==='novo'?'novo':'existente');if(!g[k]){g[k]={t:f.t,st:f.st==='novo'?'novo':'existente',q:0};order.push(k)}g[k].q++});
+ order.sort(function(a,b){var A=g[a],B=g[b];return ORD.indexOf(A.t)-ORD.indexOf(B.t)||(A.st===B.st?0:A.st==='novo'?1:-1)});
+ order.forEach(function(k){var e=g[k];tot+=e.q;if(e.st==='novo')nw+=e.q;else ex+=e.q;
+  tb+='<tr><td><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+V[e.t].c+';margin-right:6px"></i><b>'+cd(e.t)+'</b></td><td>'+esc(NAMES[e.t])+'</td><td class="n"><b>'+e.q+'</b></td><td><span class="tag '+(e.st==='novo'?'novo':'ex')+'">'+e.st+'</span></td></tr>'});
+ EX.forEach(function(x){tot+=x.qty;if(x.st==='novo')nw+=x.qty;else ex+=x.qty;tb+='<tr><td><b>'+esc(x.code)+'</b></td><td>'+esc(x.name)+'</td><td class="n"><b>'+x.qty+'</b></td><td><span class="tag '+(x.st==='novo'?'novo':'ex')+'">'+esc(x.st)+'</span></td></tr>'});
+ $('#qt tbody').innerHTML=tb;
+ $('#qt tfoot').innerHTML='<tr><th colspan="2">Total</th><th class="n">'+tot+'</th><th>'+nw+' novos · '+ex+' existentes</th></tr>';
+ var W={BM:'Linha alta (8) e treliça da frente (4)',MB:'Piso do palco, em frente ao telão',PL:'Piso (4) e parede lateral aérea (4)',PT:'Teto da nave: 3 linhas de 5',RB:'Piso do fundo (4) e parede lateral (2)',CB:'Barra da frente',MA:'Barra da frente, intercalados com os COB',AT:'Treliça da frente (4) e fundo do palco aéreo (4)',BL:'Aéreo lateral, frente dos palcos secundários (2 existentes) e linha alta (2 novos)'};
+ $('#wh tbody').innerHTML=ORD.map(function(t){return '<tr><td><b>'+cd(t)+'</b></td><td>'+esc(W[t])+'</td></tr>'}).join('')+'<tr><td><b>GM</b></td><td>Mesa FOH, no fundo da nave</td></tr>';
+ window.__txt=function(){var s='Palco Videira Rev 07 — quantidades (sem valores)\n';order.forEach(function(k){var e=g[k];s+=cd(e.t)+' · '+NAMES[e.t]+' · '+e.q+' · '+e.st+'\n'});EX.forEach(function(x){s+=x.code+' · '+x.name+' · '+x.qty+' · '+x.st+'\n'});return s+'Total '+tot+' ('+nw+' novos, '+ex+' existentes)'};
+}
+$('#bCopy').addEventListener('click',function(){
+ var s=window.__txt(),m=$('#copyMsg');
+ function ok(){m.textContent='Copiado.';setTimeout(function(){m.textContent=''},2000)}
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(s).then(ok,function(){fallback()});else fallback();
+ function fallback(){var ta=document.createElement('textarea');ta.value=s;ta.style.position='fixed';ta.style.opacity=0;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');ok()}catch(x){m.textContent='Não consegui copiar.'}document.body.removeChild(ta)}
+});
+/* tela cheia */
+var fs=$('#bFs');
+if(!(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen))fs.style.display='none';
+fs.addEventListener('click',function(){var d=document,el=d.documentElement;if(d.fullscreenElement||d.webkitFullscreenElement){(d.exitFullscreen||d.webkitExitFullscreen).call(d)}else{(el.requestFullscreen||el.webkitRequestFullscreen).call(el)}});
+document.addEventListener('visibilitychange',function(){dirty=true});
+
+buildChips();lista();lookUI();
+resize();ST.cam=adj(PRE.persp.s);
+var wideInit=window.matchMedia('(min-width:900px),(max-height:520px) and (orientation:landscape)').matches;
+if(wideInit)openTab('vistas');
+requestAnimationFrame(frame);
+setTimeout(function(){$('#hint').classList.add('off')},7000);
+window.__app={ST:ST,F:F,select:select,goto:goto,PRE:PRE,setMode:setMode,openTab:openTab,PICK:function(){return PICK},resize:resize};
+})();
+</script>
+</body>
+</html>
